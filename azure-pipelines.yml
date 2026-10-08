@@ -9,6 +9,7 @@ variables:
   javaVersion: "21"
   azureSubscription: AzureServiceConnection
   webAppName: springboot-sanjay0303
+  resourceGroup: rg-spring-boot
 
 stages:
   - stage: Build
@@ -56,10 +57,30 @@ stages:
                 - download: current
                   artifact: drop
 
-                - task: AzureWebApp@1
+                - task: AzureCLI@2
+                  displayName: Deploy JAR to App Service
                   inputs:
                     azureSubscription: $(azureSubscription)
-                    appType: webAppLinux
-                    appName: $(webAppName)
-                    package: $(Pipeline.Workspace)/drop/*.jar
-                    runtimeStack: "JAVA:21-java21"
+                    scriptType: bash
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      set -euo pipefail
+
+                      az webapp config set \
+                        --name $(webAppName) \
+                        --resource-group $(resourceGroup) \
+                        --linux-fx-version "JAVA|21-java21"
+
+                      az webapp config appsettings set \
+                        --name $(webAppName) \
+                        --resource-group $(resourceGroup) \
+                        --settings CURRENT_STACK=java WEBSITES_PORT=8080 JAVA_OPTS="-Xms128m -Xmx256m"
+
+                      JAR=$(ls $(Pipeline.Workspace)/drop/spring-boot-web-app-*.jar | head -n 1)
+                      echo "Deploying $JAR"
+
+                      az webapp deploy \
+                        --name $(webAppName) \
+                        --resource-group $(resourceGroup) \
+                        --src-path "$JAR" \
+                        --type jar
