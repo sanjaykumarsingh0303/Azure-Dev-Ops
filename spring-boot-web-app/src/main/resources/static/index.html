@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Spring Boot Web App</title>
+	<style>
+		:root {
+			color-scheme: light;
+			--bg: #f4f7fb;
+			--card: #ffffff;
+			--text: #1f2933;
+			--muted: #52606d;
+			--accent: #0f766e;
+			--accent-soft: #ccfbf1;
+		}
+
+		* { box-sizing: border-box; }
+
+		body {
+			margin: 0;
+			min-height: 100vh;
+			font-family: "Segoe UI", Tahoma, sans-serif;
+			background: radial-gradient(circle at top left, #dbeafe, var(--bg) 45%);
+			color: var(--text);
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			padding: 24px;
+		}
+
+		.card {
+			width: min(640px, 100%);
+			background: var(--card);
+			border-radius: 16px;
+			padding: 32px;
+			box-shadow: 0 16px 40px rgba(15, 23, 42, 0.12);
+		}
+
+		h1 { margin: 0 0 8px; }
+		p { color: var(--muted); line-height: 1.5; }
+
+		.row {
+			display: flex;
+			gap: 8px;
+			margin: 20px 0 16px;
+		}
+
+		input, button {
+			font: inherit;
+			padding: 10px 14px;
+			border-radius: 8px;
+		}
+
+		input {
+			flex: 1;
+			border: 1px solid #cbd2d9;
+		}
+
+		button {
+			border: 0;
+			background: var(--accent);
+			color: white;
+			cursor: pointer;
+		}
+
+		pre {
+			background: var(--accent-soft);
+			padding: 16px;
+			border-radius: 10px;
+			overflow: auto;
+		}
+
+		a { color: var(--accent); }
+	</style>
+</head>
+<body>
+	<main class="card">
+		<h1>Spring Boot Web App</h1>
+		<p>The application is running. Use the form below to call <code>/api/hello</code>.</p>
+		<div class="row">
+			<input id="name" type="text" value="World" aria-label="Name">
+			<button type="button" id="sayHello">Say hello</button>
+		</div>
+		<pre id="output">Click "Say hello" to see the API response.</pre>
+		<p>
+			Health: <a href="/actuator/health">/actuator/health</a>
+			&nbsp;|&nbsp;
+			API: <a href="/api/hello">/api/hello</a>
+		</p>
+	</main>
+	<script>
+		const output = document.getElementById("output");
+		document.getElementById("sayHello").addEventListener("click", async () => {
+			const name = encodeURIComponent(document.getElementById("name").value || "World");
+			const response = await fetch("/api/hello?name=" + name);
+			const body = await response.json();
+			output.textContent = JSON.stringify(body, null, 2);
+		});
+	</script>
+</body>
+</html>
