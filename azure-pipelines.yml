@@ -11,8 +11,9 @@ variables:
   mavenPomFile: spring-boot-web-app/pom.xml
   javaVersion: "21"
   azureSubscription: AzureServiceConnection
-  webAppName: springboot-sanjay0303
   resourceGroup: rg-spring-boot
+  webAppNameDev: springboot-sanjay0303-dev
+  webAppNameProd: springboot-sanjay0303
 
 stages:
   - stage: Build
@@ -60,12 +61,51 @@ stages:
               repository: spring-boot-web-app
               tags: $(Build.BuildId)
 
-  - stage: Deploy
-    displayName: Deploy to Azure App Service (F1)
+  - stage: DeployDev
+    displayName: Deploy to Dev
     dependsOn: Build
     condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
     jobs:
-      - deployment: DeployWeb
+      - deployment: DeployDevWeb
+        environment: development
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - download: current
+                  artifact: drop
+
+                - task: AzureCLI@2
+                  displayName: Deploy JAR to Dev App Service
+                  inputs:
+                    azureSubscription: $(azureSubscription)
+                    scriptType: bash
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      set -euo pipefail
+                      APP_NAME=$(webAppNameDev)
+                      az webapp config set \
+                        --name "$APP_NAME" \
+                        --resource-group $(resourceGroup) \
+                        --linux-fx-version "JAVA|21-java21"
+                      az webapp config appsettings set \
+                        --name "$APP_NAME" \
+                        --resource-group $(resourceGroup) \
+                        --settings CURRENT_STACK=java WEBSITES_PORT=8080 JAVA_OPTS="-Xms128m -Xmx256m"
+                      JAR=$(ls $(Pipeline.Workspace)/drop/spring-boot-web-app-*.jar | head -n 1)
+                      echo "Deploying $JAR to $APP_NAME"
+                      az webapp deploy \
+                        --name "$APP_NAME" \
+                        --resource-group $(resourceGroup) \
+                        --src-path "$JAR" \
+                        --type jar
+
+  - stage: DeployProd
+    displayName: Deploy to Production
+    dependsOn: DeployDev
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - deployment: DeployProdWeb
         environment: production
         strategy:
           runOnce:
@@ -75,29 +115,26 @@ stages:
                   artifact: drop
 
                 - task: AzureCLI@2
-                  displayName: Deploy JAR to App Service
+                  displayName: Deploy JAR to Production App Service
                   inputs:
                     azureSubscription: $(azureSubscription)
                     scriptType: bash
                     scriptLocation: inlineScript
                     inlineScript: |
                       set -euo pipefail
-
+                      APP_NAME=$(webAppNameProd)
                       az webapp config set \
-                        --name $(webAppName) \
+                        --name "$APP_NAME" \
                         --resource-group $(resourceGroup) \
                         --linux-fx-version "JAVA|21-java21"
-
                       az webapp config appsettings set \
-                        --name $(webAppName) \
+                        --name "$APP_NAME" \
                         --resource-group $(resourceGroup) \
                         --settings CURRENT_STACK=java WEBSITES_PORT=8080 JAVA_OPTS="-Xms128m -Xmx256m"
-
                       JAR=$(ls $(Pipeline.Workspace)/drop/spring-boot-web-app-*.jar | head -n 1)
-                      echo "Deploying $JAR"
-
+                      echo "Deploying $JAR to $APP_NAME"
                       az webapp deploy \
-                        --name $(webAppName) \
+                        --name "$APP_NAME" \
                         --resource-group $(resourceGroup) \
                         --src-path "$JAR" \
                         --type jar
