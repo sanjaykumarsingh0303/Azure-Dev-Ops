@@ -44,6 +44,18 @@ stages:
               PathtoPublish: $(Build.ArtifactStagingDirectory)
               ArtifactName: drop
 
+      - job: DockerBuild
+        displayName: Build Docker image
+        steps:
+          - task: Docker@2
+            displayName: docker build
+            inputs:
+              command: build
+              Dockerfile: spring-boot-web-app/Dockerfile
+              buildContext: spring-boot-web-app
+              repository: spring-boot-web-app
+              tags: $(Build.BuildId)
+
   - stage: Deploy
     displayName: Deploy to Azure App Service (F1)
     dependsOn: Build

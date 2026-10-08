@@ -1,0 +1,10 @@
+services:
+  web:
+    build:
+      context: ./spring-boot-web-app
+      dockerfile: Dockerfile
+    image: spring-boot-web-app:local
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: 8080
