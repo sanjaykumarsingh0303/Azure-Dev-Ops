@@ -1,6 +1,9 @@
 trigger:
   - main
 
+pr:
+  - main
+
 pool:
   vmImage: ubuntu-latest
 
@@ -46,6 +49,7 @@ stages:
 
       - job: DockerBuild
         displayName: Build Docker image
+        condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
         steps:
           - task: Docker@2
             displayName: docker build
@@ -59,6 +63,7 @@ stages:
   - stage: Deploy
     displayName: Deploy to Azure App Service (F1)
     dependsOn: Build
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
     jobs:
       - deployment: DeployWeb
         environment: production
