@@ -16,6 +16,7 @@ variables:
   webAppNameProd: springboot-sanjay0303
   dockerRegistryServiceConnection: AzureContainerRegistryConnection
   imageRepository: spring-boot-web-app
+  keyVaultName: springsanjaykv0303
 
 stages:
   - stage: Build
@@ -93,10 +94,14 @@ stages:
                         --name "$APP_NAME" \
                         --resource-group $(resourceGroup) \
                         --linux-fx-version "JAVA|21-java21"
+                      az webapp identity assign \
+                        --name "$APP_NAME" \
+                        --resource-group $(resourceGroup)
                       az webapp config appsettings set \
                         --name "$APP_NAME" \
                         --resource-group $(resourceGroup) \
-                        --settings CURRENT_STACK=java WEBSITES_PORT=8080 JAVA_OPTS="-Xms128m -Xmx256m"
+                        --settings CURRENT_STACK=java WEBSITES_PORT=8080 JAVA_OPTS="-Xms128m -Xmx256m" \
+                        APP_GREETING="@Microsoft.KeyVault(SecretUri=https://$(keyVaultName).vault.azure.net/secrets/GreetingMessage/)"
                       JAR=$(ls $(Pipeline.Workspace)/drop/spring-boot-web-app-*.jar | head -n 1)
                       echo "Deploying $JAR to $APP_NAME"
                       az webapp deploy \
@@ -132,10 +137,14 @@ stages:
                         --name "$APP_NAME" \
                         --resource-group $(resourceGroup) \
                         --linux-fx-version "JAVA|21-java21"
+                      az webapp identity assign \
+                        --name "$APP_NAME" \
+                        --resource-group $(resourceGroup)
                       az webapp config appsettings set \
                         --name "$APP_NAME" \
                         --resource-group $(resourceGroup) \
-                        --settings CURRENT_STACK=java WEBSITES_PORT=8080 JAVA_OPTS="-Xms128m -Xmx256m"
+                        --settings CURRENT_STACK=java WEBSITES_PORT=8080 JAVA_OPTS="-Xms128m -Xmx256m" \
+                        APP_GREETING="@Microsoft.KeyVault(SecretUri=https://$(keyVaultName).vault.azure.net/secrets/GreetingMessage/)"
                       JAR=$(ls $(Pipeline.Workspace)/drop/spring-boot-web-app-*.jar | head -n 1)
                       echo "Deploying $JAR to $APP_NAME"
                       az webapp deploy \

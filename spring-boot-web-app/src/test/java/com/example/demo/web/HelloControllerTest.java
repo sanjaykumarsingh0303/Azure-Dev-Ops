@@ -19,7 +19,8 @@ class HelloControllerTest {
 	void helloReturnsDefaultGreeting() throws Exception {
 		mockMvc.perform(get("/api/hello"))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.message").value("Hello, World!"));
+				.andExpect(jsonPath("$.message").value("Hello, World!"))
+				.andExpect(jsonPath("$.greeting").value("Hello from local"));
 	}
 
 	@Test
