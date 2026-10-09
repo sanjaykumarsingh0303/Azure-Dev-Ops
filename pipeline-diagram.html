@@ -177,12 +177,41 @@
       margin-top: 8px;
     }
 
-    .footer {
+    .notes {
       max-width: 920px;
-      margin: 32px auto 0;
-      font-size: 0.8rem;
+      margin: 36px auto 0;
+      background: var(--panel);
+      border-radius: 12px;
+      padding: 22px 24px 8px;
+    }
+
+    .notes h2 {
+      margin: 0 0 14px;
+      font-size: 1.05rem;
+    }
+
+    .notes h3 {
+      margin: 18px 0 8px;
+      font-size: 0.85rem;
+      color: var(--deploy);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .notes dl {
+      margin: 0 0 12px;
+    }
+
+    .notes dt {
+      font-size: 0.9rem;
+      margin: 12px 0 4px;
+    }
+
+    .notes dd {
+      margin: 0 0 0 16px;
+      font-size: 0.85rem;
       color: var(--muted);
-      text-align: center;
+      line-height: 1.45;
     }
 
     @media (max-width: 720px) {
@@ -296,6 +325,60 @@
       </div>
     </div>
   </div>
+
+  <section class="notes">
+    <h2>Interview points</h2>
+
+    <h3>Say this first</h3>
+    <dl>
+      <dt>What did you build?</dt>
+      <dd>GitHub repo → Azure Pipeline YAML → Maven quality gate → JAR to Dev App Service → manual approve → Prod. Image also pushed to ACR. Secrets from Key Vault. Infra as Bicep. App Insights for monitoring.</dd>
+    </dl>
+
+    <h3>CI / CD</h3>
+    <dl>
+      <dt>CI vs CD?</dt>
+      <dd>CI = every PR/main build: compile, test, package. CD = after tests pass on main: infra + Dev + approval + Prod.</dd>
+      <dt>Why YAML, not classic UI?</dt>
+      <dd>Pipeline lives in Git with the app. Same review as code. Repeatable.</dd>
+      <dt>PR vs main?</dt>
+      <dd>PR: Maven verify only — no Azure change. main: build + ACR + Bicep + Dev + Prod.</dd>
+      <dt>Quality gate?</dt>
+      <dd><code>mvn clean verify</code> with fail-if-no-tests. Red tests stop the pipeline. No JAR, no deploy.</dd>
+    </dl>
+
+    <h3>Artifacts and deploy</h3>
+    <dl>
+      <dt>What is the deploy artifact?</dt>
+      <dd>The Spring Boot JAR (drop artifact). App Service Linux, Java 21, <code>az webapp deploy --type jar</code>.</dd>
+      <dt>Why ACR if App Service is not Docker?</dt>
+      <dd>F1 Free cannot run custom containers. ACR stores the image for local Docker / later SKUs. Live site is still the JAR.</dd>
+      <dt>Dev then Prod?</dt>
+      <dd>Same JAR. Deploy Dev first. Azure DevOps <strong>production</strong> environment requires approval. Same idea as ML: test endpoint, then prod API.</dd>
+    </dl>
+
+    <h3>Azure pieces</h3>
+    <dl>
+      <dt>Bicep?</dt>
+      <dd>Infrastructure as code: App Service plan, Dev/Prod apps, App Insights. Pipeline creates/updates resources instead of clicking the portal.</dd>
+      <dt>Key Vault?</dt>
+      <dd>Greeting is not in Git. App setting <code>APP_GREETING</code> is a Key Vault reference. App identity reads the secret.</dd>
+      <dt>App Insights?</dt>
+      <dd>Connection string on the web app + Java attach. Requests and failures in one place.</dd>
+      <dt>How does the pipeline talk to Azure?</dt>
+      <dd>Service connection with workload identity (no password in YAML). Resource-group scoped.</dd>
+    </dl>
+
+    <h3>They may ask next</h3>
+    <dl>
+      <dt>F1 502 / deploy timeout?</dt>
+      <dd>Free plan: one small worker, no Always On. Running Java fights Kudu. Fix: stop → deploy JAR → start, and do not wait for F1 “site started.”</dd>
+      <dt>Two apps one plan?</dt>
+      <dd>Dev and Prod share F1 memory. Fine for a lab; in real prod use separate plans or a paid SKU.</dd>
+      <dt>How would you do this for an ML model?</dt>
+      <dd>Same flow. Artifact is a model image/version. Serve as an HTTP API. Dev endpoint → approve → prod endpoint.</dd>
+    </dl>
+  </section>
 
   <p class="footer">
     Local Docker (localhost:8080) is separate — compose image or docker pull from ACR.<br>
