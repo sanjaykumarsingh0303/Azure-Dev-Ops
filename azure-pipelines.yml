@@ -84,8 +84,6 @@ stages:
               scriptLocation: inlineScript
               inlineScript: |
                 set -euo pipefail
-                az provider register --namespace Microsoft.Insights --only-show-errors
-                az provider register --namespace Microsoft.OperationalInsights --only-show-errors
                 az deployment group create \
                   --name spring-infra \
                   --resource-group $(resourceGroup) \
