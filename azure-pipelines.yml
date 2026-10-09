@@ -17,6 +17,7 @@ variables:
   dockerRegistryServiceConnection: AzureContainerRegistryConnection
   imageRepository: spring-boot-web-app
   keyVaultName: springsanjaykv0303
+  appInsightsName: appi-springboot-sanjay0303
 
 stages:
   - stage: Build
@@ -68,9 +69,35 @@ stages:
                 $(Build.BuildId)
                 latest
 
+  - stage: DeployInfra
+    displayName: Deploy Azure infrastructure (Bicep)
+    dependsOn: Build
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - job: BicepDeploy
+        steps:
+          - task: AzureCLI@2
+            displayName: Deploy Bicep template
+            inputs:
+              azureSubscription: $(azureSubscription)
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                set -euo pipefail
+                az provider register --namespace Microsoft.Insights --only-show-errors
+                az provider register --namespace Microsoft.OperationalInsights --only-show-errors
+                az deployment group create \
+                  --name spring-infra \
+                  --resource-group $(resourceGroup) \
+                  --template-file infra/main.bicep \
+                  --parameters \
+                    webAppNameProd=$(webAppNameProd) \
+                    webAppNameDev=$(webAppNameDev) \
+                    appInsightsName=$(appInsightsName)
+
   - stage: DeployDev
     displayName: Deploy to Dev
-    dependsOn: Build
+    dependsOn: DeployInfra
     condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
     jobs:
       - deployment: DeployDevWeb
@@ -98,11 +125,16 @@ stages:
                       az webapp identity assign \
                         --name "$APP_NAME" \
                         --resource-group $(resourceGroup)
+                      AI_CONN=$(az monitor app-insights component show \
+                        --app $(appInsightsName) \
+                        --resource-group $(resourceGroup) \
+                        --query connectionString -o tsv)
                       az webapp config appsettings set \
                         --name "$APP_NAME" \
                         --resource-group $(resourceGroup) \
                         --settings CURRENT_STACK=java WEBSITES_PORT=8080 JAVA_OPTS="-Xms128m -Xmx256m" \
-                        APP_GREETING="@Microsoft.KeyVault(SecretUri=https://$(keyVaultName).vault.azure.net/secrets/GreetingMessage/)"
+                        APP_GREETING="@Microsoft.KeyVault(SecretUri=https://$(keyVaultName).vault.azure.net/secrets/GreetingMessage/)" \
+                        APPLICATIONINSIGHTS_CONNECTION_STRING="$AI_CONN"
                       JAR=$(ls $(Pipeline.Workspace)/drop/spring-boot-web-app-*.jar | head -n 1)
                       echo "Deploying $JAR to $APP_NAME"
                       az webapp deploy \
@@ -141,11 +173,16 @@ stages:
                       az webapp identity assign \
                         --name "$APP_NAME" \
                         --resource-group $(resourceGroup)
+                      AI_CONN=$(az monitor app-insights component show \
+                        --app $(appInsightsName) \
+                        --resource-group $(resourceGroup) \
+                        --query connectionString -o tsv)
                       az webapp config appsettings set \
                         --name "$APP_NAME" \
                         --resource-group $(resourceGroup) \
                         --settings CURRENT_STACK=java WEBSITES_PORT=8080 JAVA_OPTS="-Xms128m -Xmx256m" \
-                        APP_GREETING="@Microsoft.KeyVault(SecretUri=https://$(keyVaultName).vault.azure.net/secrets/GreetingMessage/)"
+                        APP_GREETING="@Microsoft.KeyVault(SecretUri=https://$(keyVaultName).vault.azure.net/secrets/GreetingMessage/)" \
+                        APPLICATIONINSIGHTS_CONNECTION_STRING="$AI_CONN"
                       JAR=$(ls $(Pipeline.Workspace)/drop/spring-boot-web-app-*.jar | head -n 1)
                       echo "Deploying $JAR to $APP_NAME"
                       az webapp deploy \
