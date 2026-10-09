@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Azure DevOps Pipeline — Spring Boot Web App</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #1e293b;
+      --box: #334155;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --pr: #38bdf8;
+      --main: #34d399;
+      --deploy: #fbbf24;
+      --sec: #c084fc;
+      --line: #64748b;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 32px 20px 48px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 1.5rem;
+      text-align: center;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: var(--muted);
+      margin-bottom: 28px;
+      font-size: 0.95rem;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 28px;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .legend span {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+    }
+
+    .flow {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+    }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: stretch;
+      gap: 16px;
+      width: 100%;
+    }
+
+    .box {
+      background: var(--box);
+      border: 2px solid var(--line);
+      border-radius: 10px;
+      padding: 14px 16px;
+      min-width: 160px;
+      max-width: 220px;
+      text-align: center;
+    }
+
+    .box h3 {
+      margin: 0 0 6px;
+      font-size: 0.95rem;
+    }
+
+    .box p {
+      margin: 0;
+      font-size: 0.75rem;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .box.source { border-color: #94a3b8; background: #1e293b; }
+    .box.pr { border-color: var(--pr); }
+    .box.build { border-color: var(--main); }
+    .box.infra { border-color: #60a5fa; }
+    .box.deploy { border-color: var(--deploy); }
+    .box.gate { border-color: #fb7185; background: #3f1d24; }
+    .box.store { border-color: var(--sec); }
+
+    .arrow {
+      color: var(--line);
+      font-size: 1.4rem;
+      line-height: 1.6;
+      text-align: center;
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      width: 100%;
+      max-width: 920px;
+    }
+
+    .lane {
+      background: var(--panel);
+      border-radius: 12px;
+      padding: 16px 12px 20px;
+    }
+
+    .lane h2 {
+      margin: 0 0 12px;
+      font-size: 0.85rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .lane.pr-lane h2 { color: var(--pr); }
+    .lane.main-lane h2 { color: var(--main); }
+
+    .lane .col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+    }
+
+    .lane .box { width: 100%; max-width: 280px; }
+
+    .stop {
+      color: #f87171;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-top: 8px;
+    }
+
+    .footer {
+      max-width: 920px;
+      margin: 32px auto 0;
+      font-size: 0.8rem;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    @media (max-width: 720px) {
+      .split { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Azure DevOps pipeline</h1>
+  <p class="subtitle">Project: Azure-Dev-Ops &nbsp;|&nbsp; App: spring-boot-web-app &nbsp;|&nbsp; File: azure-pipelines.yml</p>
+
+  <div class="legend">
+    <span><i class="swatch" style="background:#38bdf8"></i> PR only</span>
+    <span><i class="swatch" style="background:#34d399"></i> main only</span>
+    <span><i class="swatch" style="background:#fbbf24"></i> Deploy</span>
+    <span><i class="swatch" style="background:#c084fc"></i> Store / monitor</span>
+    <span><i class="swatch" style="background:#fb7185"></i> Approval gate</span>
+  </div>
+
+  <div class="flow">
+    <div class="row">
+      <div class="box source">
+        <h3>GitHub</h3>
+        <p>sanjaykumarsingh0303/Azure-Dev-Ops</p>
+      </div>
+    </div>
+    <div class="arrow">▼</div>
+    <div class="row">
+      <div class="box source">
+        <h3>Azure Pipelines</h3>
+        <p>MyFirstDevOps · trigger main · pr main</p>
+      </div>
+    </div>
+    <div class="arrow">▼ splits by branch</div>
+
+    <div class="split">
+      <div class="lane pr-lane">
+        <h2>Pull request → main</h2>
+        <div class="col">
+          <div class="box pr">
+            <h3>Maven tests</h3>
+            <p>clean verify · failIfNoTests · JUnit published</p>
+          </div>
+          <div class="arrow">▼</div>
+          <div class="box pr">
+            <h3>Quality gate</h3>
+            <p>Red tests → PR cannot ship. No deploy. No ACR. No Bicep.</p>
+          </div>
+          <p class="stop">STOP — no Azure changes</p>
+        </div>
+      </div>
+
+      <div class="lane main-lane">
+        <h2>Push to main</h2>
+        <div class="col">
+          <div class="box build">
+            <h3>Maven build</h3>
+            <p>Tests + JAR artifact (drop)</p>
+          </div>
+          <div class="arrow">▼ parallel</div>
+          <div class="box store">
+            <h3>Docker → ACR</h3>
+            <p>buildAndPush · springsanjay0303.azurecr.io</p>
+          </div>
+          <div class="arrow">▼</div>
+          <div class="box infra">
+            <h3>Bicep infra</h3>
+            <p>Plan F1 · Dev + Prod apps · App Insights</p>
+          </div>
+          <div class="arrow">▼</div>
+          <div class="box deploy">
+            <h3>Deploy Dev</h3>
+            <p>JAR → springboot-sanjay0303-dev · Key Vault greeting</p>
+          </div>
+          <div class="arrow">▼</div>
+          <div class="box gate">
+            <h3>Approve production</h3>
+            <p>Azure DevOps environment: production</p>
+          </div>
+          <div class="arrow">▼</div>
+          <div class="box deploy">
+            <h3>Deploy Prod</h3>
+            <p>JAR → springboot-sanjay0303 · F1 App Service</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow">▼ live system</div>
+    <div class="row">
+      <div class="box deploy">
+        <h3>App Service Dev</h3>
+        <p>springboot-sanjay0303-dev.azurewebsites.net</p>
+      </div>
+      <div class="box deploy">
+        <h3>App Service Prod</h3>
+        <p>springboot-sanjay0303.azurewebsites.net</p>
+      </div>
+      <div class="box store">
+        <h3>Key Vault</h3>
+        <p>GreetingMessage → APP_GREETING</p>
+      </div>
+      <div class="box store">
+        <h3>App Insights</h3>
+        <p>appi-springboot-sanjay0303</p>
+      </div>
+    </div>
+  </div>
+
+  <p class="footer">
+    Local Docker (localhost:8080) is separate — compose image or docker pull from ACR.<br>
+    Open this file in a browser: pipeline-diagram.html
+  </p>
+</body>
+</html>
