@@ -31,10 +31,11 @@ stages:
               jdkSourceOption: PreInstalled
 
           - task: Maven@4
+            displayName: Run tests and package
             inputs:
               mavenPomFile: $(mavenPomFile)
-              goals: "clean package"
-              options: "-B"
+              goals: "clean verify"
+              options: "-B -DfailIfNoTests=true"
               javaHomeOption: JDKVersion
               jdkVersionOption: "1.21"
               publishJUnitResults: true
