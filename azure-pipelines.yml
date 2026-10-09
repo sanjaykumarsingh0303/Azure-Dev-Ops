@@ -135,11 +135,18 @@ stages:
                         APPLICATIONINSIGHTS_CONNECTION_STRING="$AI_CONN"
                       JAR=$(ls $(Pipeline.Workspace)/drop/spring-boot-web-app-*.jar | head -n 1)
                       echo "Deploying $JAR to $APP_NAME"
+                      az webapp stop \
+                        --name "$APP_NAME" \
+                        --resource-group $(resourceGroup)
+                      sleep 15
                       az webapp deploy \
                         --name "$APP_NAME" \
                         --resource-group $(resourceGroup) \
                         --src-path "$JAR" \
                         --type jar
+                      az webapp start \
+                        --name "$APP_NAME" \
+                        --resource-group $(resourceGroup)
 
   - stage: DeployProd
     displayName: Deploy to Production
@@ -183,8 +190,15 @@ stages:
                         APPLICATIONINSIGHTS_CONNECTION_STRING="$AI_CONN"
                       JAR=$(ls $(Pipeline.Workspace)/drop/spring-boot-web-app-*.jar | head -n 1)
                       echo "Deploying $JAR to $APP_NAME"
+                      az webapp stop \
+                        --name "$APP_NAME" \
+                        --resource-group $(resourceGroup)
+                      sleep 15
                       az webapp deploy \
                         --name "$APP_NAME" \
                         --resource-group $(resourceGroup) \
                         --src-path "$JAR" \
                         --type jar
+                      az webapp start \
+                        --name "$APP_NAME" \
+                        --resource-group $(resourceGroup)
